@@ -6,10 +6,16 @@ import java.util.List;
 import org.biojava.bio.structure.Element;
 
 public class GraphDriver {
+	/**
+	 * An atom stores its element and the bonds its in.
+	 * 
+	 * @see PDBAtom which also stores an atom name
+	 * @author Ulysse Carion
+	 */
 	public static class Atom {
 		private Element element;
 		private List<Bond> bonds;
-		
+
 		private int currentConnectivity;
 		private int nextConnectivity;
 
@@ -40,30 +46,30 @@ public class GraphDriver {
 		public void initializeConnectivity() {
 			nextConnectivity = getHashValue();
 		}
-		
+
 		public void prepareNextConnectivity() {
 			int nextVal = 0;
-			
+
 			for (Bond bond : bonds) {
 				nextVal += bond.getOther(this).currentConnectivity;
 			}
-			
+
 			nextConnectivity = nextVal + currentConnectivity;
 		}
-		
+
 		public void useNextConnectivity() {
 			currentConnectivity = nextConnectivity;
 			nextConnectivity = -1;
 		}
-		
+
 		public int getCurrentConnectivity() {
 			return currentConnectivity;
 		}
-		
+
 		public int getNextConnectivity() {
 			return nextConnectivity;
 		}
-		
+
 		public int getHashValue() {
 			int atomicNumberScore = 10 * element.getAtomicNumber();
 			int piCenterScore = isPiCenter() ? 1 : 0;
@@ -85,6 +91,18 @@ public class GraphDriver {
 			return false;
 		}
 
+		/**
+		 * Returns true if all the following are true:
+		 * <ol>
+		 * <li>This atom is electronegative.</li>
+		 * <li>This atom is single bonded to some other atom <i>A</li> and
+		 * <i>A</i> is in turn double-bonded to some electronegative atom.
+		 * </ol>
+		 * 
+		 * @return true if this atom is in some kind of bond whose bond order is
+		 *         not really '1' but closer to '1.5' because it's shared with
+		 *         another atom.
+		 */
 		private boolean isInInterchangeableBond() {
 			if (!isElectronegative()) {
 				return false;
@@ -116,6 +134,11 @@ public class GraphDriver {
 		}
 	}
 
+	/**
+	 * Like a regular Atom, but it also has an atom name.
+	 * 
+	 * @author Ulysse Carion
+	 */
 	public static class PDBAtom extends Atom {
 		private String atomName;
 
@@ -138,6 +161,13 @@ public class GraphDriver {
 		}
 	}
 
+	/**
+	 * Keeps track of two atoms and the number of electrons they covalently
+	 * share. Remember to call {@link Bond#addSelfToAtoms()} after creating one
+	 * of these.
+	 * 
+	 * @author Ulysse Carion
+	 */
 	public static class Bond {
 		private Atom a;
 		private Atom b;
